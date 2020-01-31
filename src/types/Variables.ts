@@ -27,6 +27,7 @@ export interface TaskVariables {
   amount?: TaskVariable<number>;
   insurance?: TaskVariable<"bronze" | "silver" | "gold" | null>;
   payedAmount?: TaskVariable<number>;
+  payedByClient?: TaskVariable<number>;
 }
 
 interface Variable<T> {

@@ -1,5 +1,6 @@
 import {
   Button,
+  CircularProgress,
   Container,
   createStyles,
   FormControl,
@@ -9,16 +10,16 @@ import {
   InputLabel,
   makeStyles,
   MenuItem,
+  Paper,
   Select,
   TextField,
   Theme,
-  Typography,
-  Paper,
-  CircularProgress
+  Typography
 } from "@material-ui/core";
 import CheckIcon from "@material-ui/icons/Check";
 import ClearIcon from "@material-ui/icons/Clear";
-import React, { useState, useEffect } from "react";
+import SaveIcon from "@material-ui/icons/Save";
+import React, { useEffect, useState } from "react";
 import TaskService from "../../../services/taskService";
 import { Task } from "../../../types/Task";
 import {
@@ -30,7 +31,6 @@ import {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      height: "2000px",
       padding: theme.spacing(3)
     },
     form: {
@@ -83,10 +83,8 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
   const [city, setCity] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [message, setMessage] = useState<string>("");
-  const [amount, setAmount] = useState<number | null>(null);
-  const [insurance, setInsurance] = useState<
-    "bronze" | "silver" | "gold" | null
-  >(null);
+  const [amount, setAmount] = useState<string>("");
+  const [insurance, setInsurance] = useState<string>("");
 
   useEffect(() => {
     if (task) {
@@ -95,6 +93,14 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
         setTaskVariables(res);
       };
       fetchData();
+      setFirstname("");
+      setLastname("");
+      setAddress("");
+      setCity("");
+      setEmail("");
+      setMessage("");
+      setAmount("");
+      setInsurance("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task]);
@@ -108,8 +114,8 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
         city: { value: city },
         email: { value: email },
         message: { value: message },
-        amount: { value: amount || 0 },
-        insurance: { value: insurance }
+        amount: { value: +amount },
+        insurance: { value: insurance as "bronze" | "silver" | "gold" }
       }
     };
     if (task) {
@@ -200,8 +206,12 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
                     id="amount"
                     value={amount}
                     onChange={e =>
-                      e.target.value.match(/^\d+\.\d+$/) &&
-                      setAmount(Number(e.target.value))
+                      ((e.target.value as any) -
+                        parseFloat(e.target.value) +
+                        1 >=
+                        0 ||
+                        e.target.value === "") &&
+                      setAmount(e.target.value)
                     }
                     startAdornment={
                       <InputAdornment position="start">CHF</InputAdornment>
@@ -218,11 +228,7 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
                     labelId="insurance-label"
                     id="insurance"
                     value={insurance}
-                    onChange={e =>
-                      setInsurance(
-                        e.target.value as "gold" | "silver" | "bronze"
-                      )
-                    }
+                    onChange={e => setInsurance(String(e.target.value))}
                   >
                     <MenuItem value={"bronze"}>Bronze</MenuItem>
                     <MenuItem value={"silver"}>Silber</MenuItem>
@@ -242,11 +248,12 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
               </Grid>
               <Grid item xs={12} className={classes.alignEnd}>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
                   onClick={handleRecordDamage}
+                  startIcon={<SaveIcon />}
                 >
-                  Erfassen
+                  Speichern
                 </Button>
               </Grid>
             </Grid>
@@ -261,7 +268,7 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
           </Typography>
           <Typography>Bitte prüfe den folgenden Sachverhalt.</Typography>
           <Paper className={classes.paper}>
-            <Grid container alignItems="center">
+            <Grid container alignItems="flex-start" spacing={1}>
               <Grid item xs={5}>
                 <Typography variant="body2">Name:</Typography>
               </Grid>
@@ -303,6 +310,18 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
                   Fr.
                 </Typography>
               </Grid>
+              <Grid item xs={5}>
+                <Typography variant="body2">Selbstbehalt:</Typography>
+              </Grid>
+              <Grid item xs={7}>
+                <Typography variant="body1">
+                  {taskVariables.payedByClient &&
+                    (
+                      Math.round(taskVariables.payedByClient?.value * 100) / 100
+                    ).toFixed(2)}{" "}
+                  Fr.
+                </Typography>
+              </Grid>
             </Grid>
             <div className={classes.checkButtons}>
               <Button
@@ -321,7 +340,7 @@ const MainInterface: React.FC<Props> = ({ task, completedTask }) => {
                 onClick={() => handleCheckDamage(false)}
                 className={classes.checkButton}
               >
-                Verwerfen
+                Ablehnen
               </Button>
             </div>
           </Paper>
